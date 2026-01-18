@@ -1,0 +1,7 @@
+{
+  "name": "VozViva: Spanish Mastery",
+  "description": "원어민의 완벽한 리듬과 호흡을 따라하며 완성하는 초감각 스페인어 시제 훈련소입니다.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
