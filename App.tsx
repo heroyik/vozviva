@@ -39,9 +39,13 @@ const App: React.FC = () => {
   const [selectedVerb, setSelectedVerb] = useState<Verb>(SPANISH_VERB_DATA[0].verbs[0]);
   const [showIrregularModal, setShowIrregularModal] = useState(false);
   const [isTTSLoading, setIsTTSLoading] = useState(false);
+  const [currentlyPlayingVerb, setCurrentlyPlayingVerb] = useState<string | null>(null);
   
   const audioContext = useRef<AudioContext | null>(null);
-  
+  // 동사별 오디오 캐시 (Key: "tenseId-verbName", Value: AudioBuffer)
+  const audioCache = useRef<Map<string, AudioBuffer>>(new Map());
+  const abortController = useRef<AbortController | null>(null);
+
   const allIrregularVerbs = SPANISH_VERB_DATA.flatMap(tense => 
     tense.verbs.filter(v => v.isIrregular).map(v => ({ 
       ...v, 
@@ -59,16 +63,25 @@ const App: React.FC = () => {
     }
   };
 
-  // --- TTS Generation Logic ---
-  const generateTTS = async (script: string) => {
+  // 특정 동사의 오디오 가져오기 (캐시 우선 확인)
+  const getVerbAudio = async (tense: TenseData, verb: Verb): Promise<AudioBuffer | null> => {
+    const cacheKey = `${tense.id}-${verb.name}`;
+    if (audioCache.current.has(cacheKey)) {
+      return audioCache.current.get(cacheKey)!;
+    }
+
+    // API를 통해 스크립트 생성
+    let script = `${verb.name}. `;
+    verb.conjugations.forEach(c => {
+      const pronoun = c.pronoun.split('/')[0];
+      script += `${pronoun} ${c.form}. `;
+    });
+
     try {
-      setIsTTSLoading(true);
-      initAudio();
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
-      
       const response = await ai.models.generateContent({
         model: "gemini-2.5-flash-preview-tts",
-        contents: [{ parts: [{ text: script }] }],
+        contents: [{ parts: [{ text: script.trim() }] }],
         config: {
           responseModalities: [Modality.AUDIO],
           speechConfig: {
@@ -79,55 +92,70 @@ const App: React.FC = () => {
         },
       });
 
-      const candidates = response.candidates;
-      if (!candidates || candidates.length === 0) throw new Error('No candidates received.');
-
-      const audioPart = candidates[0].content?.parts?.find(p => p.inlineData?.data);
-      
+      const audioPart = response.candidates?.[0]?.content?.parts?.find(p => p.inlineData?.data);
       if (audioPart?.inlineData?.data) {
-        const base64Audio = audioPart.inlineData.data;
-        const outCtx = audioContext.current!;
-        const buffer = await decodeAudioData(decode(base64Audio), outCtx, 24000, 1);
-        const source = outCtx.createBufferSource();
-        source.buffer = buffer;
-        source.connect(outCtx.destination);
-        source.start();
+        initAudio();
+        const buffer = await decodeAudioData(decode(audioPart.inlineData.data), audioContext.current!, 24000, 1);
+        audioCache.current.set(cacheKey, buffer);
+        return buffer;
       }
-    } catch (err: any) {
-      console.error('TTS Error:', err);
-    } finally {
-      setIsTTSLoading(false);
+    } catch (err) {
+      console.error(`TTS Error for ${verb.name}:`, err);
     }
+    return null;
   };
 
-  const getCleanTenseTitle = (title: string) => title.split(' (')[0];
-
-  const readCategoryVerbs = (categoryName: string, verbs: Verb[]) => {
-    let script = "";
-    verbs.forEach(v => {
-      script += `${v.name}. `;
-      v.conjugations.forEach(c => {
-        const pronoun = c.pronoun.split('/')[0];
-        script += `${pronoun} ${c.form}. `;
-      });
-      script += ". ";
+  // 단일 오디오 재생
+  const playBuffer = (buffer: AudioBuffer): Promise<void> => {
+    return new Promise((resolve) => {
+      initAudio();
+      const source = audioContext.current!.createBufferSource();
+      source.buffer = buffer;
+      source.connect(audioContext.current!.destination);
+      source.onended = () => resolve();
+      source.start();
     });
-    generateTTS(script.trim());
   };
 
-  const readAllTenses = () => {
-    let script = "";
-    SPANISH_VERB_DATA.forEach(t => {
-      const tenseName = getCleanTenseTitle(t.title);
-      const exampleVerb = t.verbs[0];
-      script += `${tenseName}. `;
-      exampleVerb.conjugations.forEach(c => {
-        const pronoun = c.pronoun.split('/')[0];
-        script += `${pronoun} ${c.form}. `;
-      });
-      script += ". ";
-    });
-    generateTTS(script.trim());
+  // 동사 하나 읽기
+  const readSingleVerb = async (verb: Verb = selectedVerb) => {
+    if (isTTSLoading) return;
+    setIsTTSLoading(true);
+    setCurrentlyPlayingVerb(verb.name);
+    
+    const buffer = await getVerbAudio(selectedTense, verb);
+    if (buffer) {
+      await playBuffer(buffer);
+    }
+    
+    setCurrentlyPlayingVerb(null);
+    setIsTTSLoading(false);
+  };
+
+  // 카테고리(정규/불규칙) 전체 순차 재생
+  const readCategoryVerbs = async (categoryName: string, verbs: Verb[]) => {
+    if (isTTSLoading) {
+      // 이미 재생 중이면 중단 로직 (선택사항)
+      return;
+    }
+    
+    setIsTTSLoading(true);
+    for (const verb of verbs) {
+      setCurrentlyPlayingVerb(verb.name);
+      const buffer = await getVerbAudio(selectedTense, verb);
+      if (buffer) {
+        await playBuffer(buffer);
+        // 동사 사이의 아주 짧은 간격
+        await new Promise(r => setTimeout(r, 500));
+      }
+    }
+    setCurrentlyPlayingVerb(null);
+    setIsTTSLoading(false);
+  };
+
+  // 모든 시제 통합 읽기는 너무 방대하므로 현재 선택된 시제의 모든 동사 읽기로 대체하거나 유지
+  const readCurrentTenseAll = async () => {
+    await readCategoryVerbs('All', selectedTense.verbs);
   };
 
   return (
@@ -142,12 +170,12 @@ const App: React.FC = () => {
         </div>
         <div className="flex gap-2">
           <button 
-            onClick={readAllTenses}
+            onClick={readCurrentTenseAll}
             disabled={isTTSLoading}
             className="bg-emerald-700 hover:bg-emerald-600 text-white px-5 py-2.5 rounded-full text-sm font-semibold border border-emerald-500/30 flex items-center gap-2 transition-all disabled:opacity-50"
           >
-            {isTTSLoading ? <i className="fas fa-spinner animate-spin"></i> : <i className="fas fa-volume-up"></i>}
-            모든 시제 통합 읽기
+            {isTTSLoading && !currentlyPlayingVerb ? <i className="fas fa-spinner animate-spin"></i> : <i className="fas fa-volume-up"></i>}
+            현재 시제 전체 읽기
           </button>
           <button 
             onClick={() => setShowIrregularModal(true)}
@@ -205,7 +233,7 @@ const App: React.FC = () => {
                   disabled={isTTSLoading}
                   className="text-[10px] font-bold text-emerald-400 hover:text-emerald-300 flex items-center gap-1.5 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20 disabled:opacity-50"
                 >
-                  {isTTSLoading ? <i className="fas fa-spinner animate-spin"></i> : <i className="fas fa-play-circle"></i>}
+                  {isTTSLoading && currentlyPlayingVerb ? <i className="fas fa-circle-notch animate-spin"></i> : <i className="fas fa-play-circle"></i>}
                   전체 읽기
                 </button>
               </div>
@@ -214,13 +242,16 @@ const App: React.FC = () => {
                   <button
                     key={v.name}
                     onClick={() => setSelectedVerb(v)}
-                    className={`px-3 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all flex items-center justify-center gap-2 border w-full text-center ${
+                    className={`px-3 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all flex items-center justify-center gap-2 border w-full text-center relative overflow-hidden ${
                       selectedVerb.name === v.name 
                         ? 'bg-emerald-600 text-white shadow-lg border-emerald-500 ring-2 ring-emerald-500/30' 
                         : 'bg-slate-700/50 text-slate-300 hover:bg-slate-700 border-slate-700'
                     }`}
                   >
                     <span className="truncate">{v.name}</span>
+                    {currentlyPlayingVerb === v.name && (
+                      <div className="absolute inset-0 bg-emerald-400/20 animate-pulse"></div>
+                    )}
                   </button>
                 ))}
               </div>
@@ -239,7 +270,7 @@ const App: React.FC = () => {
                   disabled={isTTSLoading}
                   className="text-[10px] font-bold text-amber-400 hover:text-amber-300 flex items-center gap-1.5 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20 disabled:opacity-50"
                 >
-                  {isTTSLoading ? <i className="fas fa-spinner animate-spin"></i> : <i className="fas fa-play-circle"></i>}
+                  {isTTSLoading && currentlyPlayingVerb ? <i className="fas fa-circle-notch animate-spin"></i> : <i className="fas fa-play-circle"></i>}
                   전체 읽기
                 </button>
               </div>
@@ -248,7 +279,7 @@ const App: React.FC = () => {
                   <button
                     key={v.name}
                     onClick={() => setSelectedVerb(v)}
-                    className={`px-3 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all flex items-center justify-center gap-2 border w-full text-center ${
+                    className={`px-3 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all flex items-center justify-center gap-2 border w-full text-center relative overflow-hidden ${
                       selectedVerb.name === v.name 
                         ? 'bg-amber-600 text-white shadow-lg border-amber-500 ring-2 ring-emerald-500/30' 
                         : 'bg-slate-700/50 text-slate-300 hover:bg-slate-700 border-slate-700'
@@ -256,6 +287,9 @@ const App: React.FC = () => {
                   >
                     <span className="truncate">{v.name}</span>
                     <i className="fas fa-star text-amber-400 text-[10px] flex-shrink-0"></i>
+                    {currentlyPlayingVerb === v.name && (
+                      <div className="absolute inset-0 bg-amber-400/20 animate-pulse"></div>
+                    )}
                   </button>
                 ))}
               </div>
@@ -273,11 +307,20 @@ const App: React.FC = () => {
               <span className="font-bold text-amber-400 text-2xl">{selectedVerb.name}</span>
               <span className="text-sm text-slate-500 font-medium">{selectedVerb.translation}</span>
             </div>
-            {selectedVerb.isIrregular && (
-              <span className="bg-red-500/20 text-red-400 text-[10px] px-3 py-1 rounded-full font-black border border-red-500/30 tracking-wider">
-                IRREGULAR
-              </span>
-            )}
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={() => readSingleVerb()}
+                disabled={isTTSLoading}
+                className="w-10 h-10 rounded-full bg-emerald-500 hover:bg-emerald-400 text-slate-900 flex items-center justify-center transition-all disabled:opacity-50 shadow-lg"
+              >
+                {isTTSLoading && currentlyPlayingVerb === selectedVerb.name ? <i className="fas fa-spinner animate-spin"></i> : <i className="fas fa-play"></i>}
+              </button>
+              {selectedVerb.isIrregular && (
+                <span className="bg-red-500/20 text-red-400 text-[10px] px-3 py-1 rounded-full font-black border border-red-500/30 tracking-wider">
+                  IRREGULAR
+                </span>
+              )}
+            </div>
           </div>
           <div className="p-2">
             <table className="w-full text-left">
@@ -330,7 +373,7 @@ const App: React.FC = () => {
                         <p className="text-xs text-slate-500">{v.translation}</p>
                       </div>
                       <span className="text-[10px] font-bold px-2 py-1 rounded bg-amber-500/10 text-amber-500 border border-amber-500/20 uppercase">
-                        {v.tenseTitle.split('(')[0]}
+                        {v.tenseId}
                       </span>
                     </div>
                     <div className="grid grid-cols-2 gap-x-4 gap-y-2 flex-1">
@@ -358,7 +401,7 @@ const App: React.FC = () => {
           <a href="https://heroyik.github.io" target="_blank" rel="noopener noreferrer" className="hover:text-amber-500 transition-colors">
             <i className="fas fa-house text-xl"></i>
           </a>
-          <a href="https://github.com/heroyik" target="_blank" rel="noopener noreferrer" className="hover:text-amber-500 transition-colors">
+          <a href="https://github.com/heroyik/vozviva" target="_blank" rel="noopener noreferrer" className="hover:text-amber-500 transition-colors">
             <i className="fab fa-github text-xl"></i>
           </a>
         </div>
