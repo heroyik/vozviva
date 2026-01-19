@@ -1,5 +1,5 @@
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Tense, TenseData, Verb } from './types';
 import { SPANISH_VERB_DATA } from './constants';
 import { GoogleGenAI, Modality } from '@google/genai';
@@ -43,6 +43,16 @@ class AudioStore {
       const transaction = this.db!.transaction(this.storeName, 'readwrite');
       const request = transaction.objectStore(this.storeName).put(data, key);
       request.onsuccess = () => resolve();
+    });
+  }
+
+  async getAllKeys(): Promise<string[]> {
+    if (!this.db) await this.init();
+    return new Promise((resolve) => {
+      const transaction = this.db!.transaction(this.storeName, 'readonly');
+      const request = transaction.objectStore(this.storeName).getAllKeys();
+      request.onsuccess = () => resolve(request.result as string[]);
+      request.onerror = () => resolve([]);
     });
   }
 }
@@ -110,13 +120,15 @@ const HighlightedForm: React.FC<{ form: string, isIrregular?: boolean }> = ({ fo
   );
 };
 
-const WaveformIndicator: React.FC<{ color: string }> = ({ color }) => (
+const WaveformIndicator: React.FC<{ color: string, isPaused?: boolean }> = ({ color, isPaused }) => (
   <div className="flex items-end gap-0.5 h-3">
-    <div className={`wave-bar ${color}`} style={{ height: '6px' }}></div>
-    <div className={`wave-bar ${color}`} style={{ height: '10px' }}></div>
-    <div className={`wave-bar ${color}`} style={{ height: '4px' }}></div>
-    <div className={`wave-bar ${color}`} style={{ height: '12px' }}></div>
-    <div className={`wave-bar ${color}`} style={{ height: '8px' }}></div>
+    {[1, 2, 3, 4, 5].map(i => (
+      <div 
+        key={i} 
+        className={`wave-bar ${color} ${isPaused ? '!animation-none !h-1' : ''}`} 
+        style={{ height: `${[6, 10, 4, 12, 8][i-1]}px`, animationDelay: `${(i-1)*0.1}s` }}
+      ></div>
+    ))}
   </div>
 );
 
@@ -128,11 +140,13 @@ const App: React.FC = () => {
   const [isTTSLoading, setIsTTSLoading] = useState(false);
   const [currentlyPlayingVerb, setCurrentlyPlayingVerb] = useState<string | null>(null);
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const [audioProgress, setAudioProgress] = useState(0); 
   const [isRepeatEnabled, setIsRepeatEnabled] = useState(false);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [tenseFavorites, setTenseFavorites] = useState<Set<string>>(new Set());
   const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
+  const [cachedKeys, setCachedKeys] = useState<Set<string>>(new Set());
   
   const audioContext = useRef<AudioContext | null>(null);
   const currentSource = useRef<AudioBufferSourceNode | null>(null);
@@ -145,7 +159,19 @@ const App: React.FC = () => {
     isRepeatEnabledRef.current = isRepeatEnabled;
   }, [isRepeatEnabled]);
 
+  useEffect(() => {
+    audioStore.getAllKeys().then(keys => setCachedKeys(new Set(keys)));
+  }, []);
+
   const getVerbKey = (tenseId: string, verbName: string) => `${tenseId}_${verbName}`;
+
+  // Cache Logic
+  const isVerbCached = (tenseId: string, verbName: string) => cachedKeys.has(getVerbKey(tenseId, verbName));
+  const isTenseCached = (tenseId: string) => {
+    const tense = SPANISH_VERB_DATA.find(t => t.id === tenseId);
+    return tense ? tense.verbs.every(v => isVerbCached(tenseId, v.name)) : false;
+  };
+  const isAllCached = useMemo(() => SPANISH_VERB_DATA.every(t => isTenseCached(t.id)), [cachedKeys]);
 
   const toggleFavorite = (e: React.MouseEvent, tenseId: string, verbName: string) => {
     e.stopPropagation();
@@ -171,14 +197,6 @@ const App: React.FC = () => {
   const isFav = (tenseId: string, verbName: string) => favorites.has(getVerbKey(tenseId, verbName));
   const isTenseFav = (tenseId: string) => tenseFavorites.has(tenseId);
 
-  const allIrregularVerbs = SPANISH_VERB_DATA.flatMap(tense => 
-    tense.verbs.filter(v => v.isIrregular).map(v => ({ 
-      ...v, 
-      tenseTitle: tense.title,
-      tenseId: tense.id
-    }))
-  );
-
   const regularVerbs = primaryTense.verbs.filter(v => 
     !v.isIrregular && (!showOnlyFavorites || isFav(primaryTense.id, v.name) || isTenseFav(primaryTense.id))
   );
@@ -192,6 +210,17 @@ const App: React.FC = () => {
     }
   };
 
+  const togglePause = async () => {
+    if (!audioContext.current) return;
+    if (audioContext.current.state === 'running') {
+      await audioContext.current.suspend();
+      setIsPaused(true);
+    } else if (audioContext.current.state === 'suspended') {
+      await audioContext.current.resume();
+      setIsPaused(false);
+    }
+  };
+
   const clearProgress = () => {
     if (progressInterval.current) {
       window.clearInterval(progressInterval.current);
@@ -200,8 +229,11 @@ const App: React.FC = () => {
     setAudioProgress(0);
   };
 
-  const stopAudio = () => {
+  const stopAudio = async () => {
     stopRequested.current = true;
+    if (audioContext.current && audioContext.current.state === 'suspended') {
+      await audioContext.current.resume();
+    }
     if (currentSource.current) {
       try {
         currentSource.current.stop();
@@ -212,6 +244,7 @@ const App: React.FC = () => {
     setIsAudioPlaying(false);
     setIsTTSLoading(false);
     setCurrentlyPlayingVerb(null);
+    setIsPaused(false);
   };
 
   const scrollToCard = () => {
@@ -235,7 +268,7 @@ const App: React.FC = () => {
   };
 
   const getVerbAudioBuffer = async (tense: TenseData, verb: Verb): Promise<AudioBuffer | null> => {
-    const cacheKey = `${tense.id}_${verb.name}`;
+    const cacheKey = getVerbKey(tense.id, verb.name);
     initAudio();
 
     const cachedData = await audioStore.get(cacheKey);
@@ -279,6 +312,7 @@ const App: React.FC = () => {
       if (audioPart?.inlineData?.data) {
         const rawBytes = decode(audioPart.inlineData.data);
         await audioStore.set(cacheKey, rawBytes);
+        setCachedKeys(prev => new Set([...Array.from(prev), cacheKey]));
         return decodeAudioData(rawBytes, audioContext.current!, 24000, 1);
       }
     } catch (err) {
@@ -299,11 +333,14 @@ const App: React.FC = () => {
       source.connect(audioContext.current!.destination);
       
       const duration = buffer.duration;
-      const startTime = Date.now();
+      const startTimeRef = { value: audioContext.current!.currentTime };
       
       clearProgress();
       progressInterval.current = window.setInterval(() => {
-        const elapsed = (Date.now() - startTime) / 1000;
+        if (audioContext.current?.state === 'suspended') return;
+        
+        // Use AudioContext time for accurate progress even when paused/resumed
+        const elapsed = audioContext.current!.currentTime - startTimeRef.value;
         const progress = Math.min((elapsed / duration) * 100, 100);
         setAudioProgress(progress);
       }, 50);
@@ -321,11 +358,13 @@ const App: React.FC = () => {
   };
 
   const readSingleVerb = async (verb: Verb = selectedVerb) => {
-    if (isTTSLoading || isAudioPlaying) {
-      stopAudio();
+    if (isAudioPlaying && currentlyPlayingVerb === verb.name) {
+      togglePause();
       return;
     }
+    if (isTTSLoading) return;
     
+    stopAudio();
     stopRequested.current = false;
     setIsTTSLoading(true);
     setCurrentlyPlayingVerb(verb.name);
@@ -353,25 +392,25 @@ const App: React.FC = () => {
   };
 
   const readSelectedTensesVerbs = async () => {
-    if (isTTSLoading || isAudioPlaying) {
-      stopAudio();
+    if (isAudioPlaying && !currentlyPlayingVerb) {
+      togglePause();
       return;
     }
-    
+    if (isTTSLoading) return;
+
+    stopAudio();
     stopRequested.current = false;
     setIsTTSLoading(true);
     
     let allVerbsToRead: { verb: Verb; tense: TenseData }[] = [];
 
     if (showOnlyFavorites) {
-      // 즐겨찾기 필터가 켜진 경우: 시제 그리드 선택과 무관하게 '즐겨찾기된 모든 시제'와 '즐겨찾기된 모든 동사'를 수집
       allVerbsToRead = SPANISH_VERB_DATA.flatMap(t => 
         t.verbs
           .filter(v => isFav(t.id, v.name) || isTenseFav(t.id))
           .map(v => ({ verb: v, tense: t }))
       );
     } else {
-      // 일반 모드: 현재 상단 그리드에서 선택된 시제들의 모든 동사를 수집
       const tensesToRead = SPANISH_VERB_DATA.filter(t => selectedTenseIds.includes(t.id));
       allVerbsToRead = tensesToRead.flatMap(t => t.verbs.map(v => ({ verb: v, tense: t })));
     }
@@ -412,18 +451,16 @@ const App: React.FC = () => {
   };
 
   const readCategoryVerbs = async (verbs: Verb[]) => {
-    if (isTTSLoading || isAudioPlaying) {
+    if (isAudioPlaying) {
       stopAudio();
       return;
     }
-    
     stopRequested.current = false;
     setIsTTSLoading(true);
     
     do {
       for (const verb of verbs) {
         if (stopRequested.current) break;
-        
         setSelectedVerb(verb);
         setCurrentlyPlayingVerb(verb.name);
         scrollToCard();
@@ -453,19 +490,24 @@ const App: React.FC = () => {
     <div className="min-h-screen px-4 py-4 md:p-10 flex flex-col items-center max-w-6xl mx-auto pb-24 relative overflow-x-hidden">
       {/* Brand Header */}
       <header className="w-full mb-6 md:mb-16 flex flex-col md:flex-row justify-between items-center gap-4">
-        <div className="text-center md:text-left">
-          <h1 className="text-4xl md:text-8xl font-black mb-0 md:mb-1 tracking-tighter text-white">
-            VOZ<span className="text-terracotta">VIVA</span>
+        <div className="text-center md:text-left relative group">
+          <h1 className={`text-4xl md:text-8xl font-black mb-0 md:mb-1 tracking-tighter transition-all duration-700 ${isAllCached ? 'text-amber-400 drop-shadow-[0_0_20px_rgba(251,191,36,0.4)]' : 'text-white'}`}>
+            VOZ<span className={isAllCached ? 'text-white' : 'text-terracotta'}>VIVA</span>
           </h1>
           <p className="text-slate-500 font-light text-[8px] md:text-sm tracking-[0.3em] uppercase">Advanced Linguistic Training</p>
+          {isAllCached && (
+            <div className="absolute -top-4 -right-12 md:-top-8 md:-right-24 bg-amber-400 text-black text-[7px] md:text-[10px] font-black px-2 py-0.5 md:px-4 md:py-1 rounded-full animate-bounce shadow-xl">
+              <i className="fas fa-check-double mr-1"></i> OFFLINE READY
+            </div>
+          )}
         </div>
+        
         <div className="flex flex-row gap-2 w-full sm:w-auto">
-          {/* Favorite Filter Toggle */}
           <button 
             onClick={() => setShowOnlyFavorites(prev => !prev)}
             className={`flex-none w-10 md:w-16 rounded-xl md:rounded-full border flex items-center justify-center transition-all ${
               showOnlyFavorites 
-                ? 'bg-terracotta/20 text-terracotta border-terracotta shadow-[0_0_15px_rgba(226,114,91,0.2)]' 
+                ? 'bg-terracotta/20 text-terracotta border-terracotta' 
                 : 'bg-white/5 text-slate-500 border-white/10'
             }`}
             title="Show Favorites Only"
@@ -485,22 +527,33 @@ const App: React.FC = () => {
             <i className={`fas fa-redo text-xs md:text-base ${isRepeatEnabled ? 'fa-spin-slow' : ''}`}></i>
           </button>
 
-          <button 
-            onClick={readSelectedTensesVerbs}
-            className={`flex-1 sm:flex-none ${
-              (isTTSLoading || isAudioPlaying) && !currentlyPlayingVerb ? 'bg-white/10 text-terracotta border-terracotta/30' : 'bg-white/5 text-white border-white/10'
-            } hover:bg-white/10 px-4 py-2.5 md:px-8 md:py-4 rounded-xl md:rounded-full text-[9px] md:text-xs font-bold border flex items-center justify-center gap-2 md:gap-3 transition-all shimmer-track`}
-          >
-            {(isTTSLoading || isAudioPlaying) && !currentlyPlayingVerb ? (
-               <><i className="fas fa-stop text-terracotta animate-pulse"></i> STOP</>
-            ) : (
-              <><i className="fas fa-play text-terracotta"></i> {showOnlyFavorites ? 'FAV READING' : 'FULL READING'}</>
+          <div className="flex flex-1 sm:flex-none gap-1">
+            <button 
+              onClick={readSelectedTensesVerbs}
+              className={`flex-1 sm:flex-none h-10 md:h-16 ${
+                isAudioPlaying && !currentlyPlayingVerb ? 'bg-med-teal text-white border-med-teal' : 'bg-white/5 text-white border-white/10'
+              } hover:bg-white/10 px-4 md:px-8 rounded-xl md:rounded-full text-[9px] md:text-xs font-bold border flex items-center justify-center gap-2 transition-all shimmer-track`}
+            >
+              {isAudioPlaying && !currentlyPlayingVerb ? (
+                isPaused ? <><i className="fas fa-play text-white"></i> RESUME</> : <><i className="fas fa-pause text-white"></i> PAUSE</>
+              ) : (
+                <><i className="fas fa-play text-terracotta"></i> {showOnlyFavorites ? 'FAV READING' : 'FULL READING'}</>
+              )}
+            </button>
+            
+            {(isAudioPlaying || isTTSLoading) && (
+              <button 
+                onClick={stopAudio}
+                className="w-10 h-10 md:w-16 md:h-16 rounded-xl md:rounded-full bg-white/10 text-terracotta border border-terracotta/30 flex items-center justify-center"
+              >
+                <i className="fas fa-stop text-xs md:text-base"></i>
+              </button>
             )}
-          </button>
+          </div>
 
           <button 
             onClick={() => setShowIrregularModal(true)}
-            className="flex-1 sm:flex-none bg-terracotta hover:bg-terracotta/90 text-white px-4 py-2.5 md:px-8 md:py-4 rounded-xl md:rounded-full text-[9px] md:text-xs font-bold shadow-2xl shadow-terracotta/20 flex items-center justify-center gap-2 transition-all"
+            className="flex-1 sm:flex-none h-10 md:h-16 bg-terracotta hover:bg-terracotta/90 text-white px-4 md:px-8 rounded-xl md:rounded-full text-[9px] md:text-xs font-bold shadow-2xl flex items-center justify-center gap-2 transition-all"
           >
             <i className="fas fa-bolt"></i> ARCHIVE
           </button>
@@ -520,14 +573,17 @@ const App: React.FC = () => {
                   : 'bg-white/5 text-slate-500 border-white/5 hover:border-white/20'
               }`}
             >
+              {isTenseCached(t.id) && (
+                <div className="absolute -top-2 -right-2 w-4 h-4 md:w-6 md:h-6 bg-med-teal text-white rounded-full flex items-center justify-center text-[6px] md:text-[8px] shadow-lg border border-zinc-900">
+                  <i className="fas fa-check"></i>
+                </div>
+              )}
               <div className="flex flex-col items-center gap-1">
                 <span className="truncate w-full">{t.id}</span>
                 <i 
                   onClick={(e) => toggleTenseFavorite(e, t.id)}
                   className={`fa${isTenseFav(t.id) ? 's' : 'r'} fa-heart text-[8px] transition-colors ${
-                    isTenseFav(t.id) 
-                      ? 'text-terracotta' 
-                      : 'text-slate-800 hover:text-slate-600'
+                    isTenseFav(t.id) ? 'text-terracotta' : 'text-slate-800 hover:text-slate-600'
                   }`}
                 ></i>
               </div>
@@ -539,8 +595,6 @@ const App: React.FC = () => {
       <div className="w-full flex flex-col lg:grid lg:grid-cols-12 gap-6 md:gap-12 items-start">
         <div className="w-full order-1 lg:order-2 lg:col-span-8 scroll-mt-6 md:scroll-mt-10" ref={cardRef}>
           <section className="bg-white/[0.02] border border-white/10 rounded-[1.5rem] md:rounded-[3.5rem] overflow-hidden shadow-2xl relative">
-            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-white/[0.03] to-transparent pointer-events-none"></div>
-            
             <div className="p-5 md:p-20 relative z-10">
               <div className="flex flex-col md:flex-row justify-between items-center md:items-end gap-4 md:gap-10 mb-6 md:mb-14 border-b border-white/5 pb-6 md:pb-12">
                 <div className="flex-1 text-center md:text-left">
@@ -556,7 +610,11 @@ const App: React.FC = () => {
                     }`}>
                       {selectedVerb.isIrregular ? 'Irregular' : 'Regular'}
                     </span>
-                    <span className="text-slate-600 text-[7px] md:text-[10px] font-black tracking-widest uppercase">{primaryTense.id}</span>
+                    {isVerbCached(primaryTense.id, selectedVerb.name) && (
+                      <span className="text-amber-400 text-[8px] md:text-[10px] font-black uppercase flex items-center gap-1">
+                        <i className="fas fa-bolt"></i> CACHED
+                      </span>
+                    )}
                   </div>
                   <h2 className="text-4xl sm:text-6xl md:text-[10rem] font-black text-white tracking-tighter leading-[1] mb-1 md:mb-4">{selectedVerb.name}</h2>
                   <p className="text-sm md:text-2xl text-slate-500 font-light tracking-tight lowercase">/ {selectedVerb.translation} /</p>
@@ -573,10 +631,10 @@ const App: React.FC = () => {
                    )}
                    <button 
                     onClick={() => readSingleVerb()}
-                    className={`w-16 h-16 md:w-28 md:h-28 rounded-full ${isAudioPlaying && currentlyPlayingVerb === selectedVerb.name ? 'bg-terracotta text-white' : 'bg-white text-black'} flex items-center justify-center text-xl md:text-3xl hover:scale-105 active:scale-90 transition-all shadow-xl relative z-10`}
+                    className={`w-16 h-16 md:w-28 md:h-28 rounded-full ${isAudioPlaying && currentlyPlayingVerb === selectedVerb.name ? (isPaused ? 'bg-amber-400 text-black' : 'bg-terracotta text-white') : 'bg-white text-black'} flex items-center justify-center text-xl md:text-3xl hover:scale-105 transition-all shadow-xl relative z-10`}
                   >
                     {isTTSLoading && currentlyPlayingVerb === selectedVerb.name ? <i className="fas fa-spinner animate-spin"></i> : 
-                     isAudioPlaying && currentlyPlayingVerb === selectedVerb.name ? <i className="fas fa-stop"></i> : <i className="fas fa-play ml-1"></i>}
+                     isAudioPlaying && currentlyPlayingVerb === selectedVerb.name ? (isPaused ? <i className="fas fa-play ml-1"></i> : <i className="fas fa-pause"></i>) : <i className="fas fa-play ml-1"></i>}
                   </button>
                 </div>
               </div>
@@ -585,7 +643,7 @@ const App: React.FC = () => {
                 {selectedVerb.conjugations.map((c, idx) => (
                   <div key={idx} className="group border-l-2 md:border-l-4 border-white/5 pl-3 md:pl-10 hover:border-terracotta transition-all duration-500">
                     <span className="block text-slate-600 text-[8px] md:text-[10px] font-black tracking-[0.2em] md:tracking-[0.5em] uppercase mb-1 md:mb-4">{c.pronoun}</span>
-                    <span className="text-xl sm:text-2xl md:text-6xl font-black tracking-tighter transition-all duration-300">
+                    <span className="text-xl sm:text-2xl md:text-6xl font-black tracking-tighter">
                       <HighlightedForm form={c.form} isIrregular={selectedVerb.isIrregular} />
                     </span>
                   </div>
@@ -605,29 +663,36 @@ const App: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 gap-6">
-            {regularVerbs.length > 0 && (
-              <div>
+            {/* List for Regulars/Irregulars */}
+            {[
+              { title: 'REGULARES', verbs: regularVerbs, color: 'med-teal' },
+              { title: 'IRREGULARES', verbs: irregularVerbs, color: 'terracotta' }
+            ].map(group => group.verbs.length > 0 && (
+              <div key={group.title}>
                 <div className="flex justify-between items-center mb-3 px-2">
-                  <h4 className="text-[9px] md:text-[10px] font-black text-slate-500 tracking-[0.4em] uppercase">REGULARES</h4>
-                  <button onClick={() => readCategoryVerbs(regularVerbs)} className="text-med-teal text-[8px] font-black tracking-widest uppercase">READ ALL</button>
+                  <h4 className="text-[9px] md:text-[10px] font-black text-slate-500 tracking-[0.4em] uppercase">{group.title}</h4>
+                  <button onClick={() => readCategoryVerbs(group.verbs)} className={`text-${group.color} text-[8px] font-black tracking-widest uppercase`}>READ ALL</button>
                 </div>
                 <div className="grid grid-cols-2 lg:grid-cols-1 gap-2 md:gap-3">
-                  {regularVerbs.map((v) => (
+                  {group.verbs.map((v) => (
                     <button
                       key={v.name}
                       onClick={() => { stopAudio(); setSelectedVerb(v); scrollToCard(); }}
                       className={`relative overflow-hidden p-3.5 md:px-8 md:py-5 rounded-xl md:rounded-[1.5rem] text-left transition-all border-2 ${
-                        selectedVerb.name === v.name ? 'bg-med-teal text-white border-med-teal shadow-lg' : 'bg-white/[0.02] text-slate-400 border-white/5 hover:border-white/20'
+                        selectedVerb.name === v.name ? `bg-${group.color} text-white border-${group.color}` : 'bg-white/[0.02] text-slate-400 border-white/5 hover:border-white/20'
                       }`}
                     >
                       <div className="flex justify-between items-center mb-1">
-                        <span className="text-xs md:text-xl font-bold truncate pr-2">{v.name}</span>
+                        <div className="flex items-center gap-2 truncate pr-2">
+                          <span className="text-xs md:text-xl font-bold truncate">{v.name}</span>
+                          {isVerbCached(primaryTense.id, v.name) && <i className="fas fa-bolt text-[8px] md:text-[10px] text-amber-400"></i>}
+                        </div>
                         <div className="flex items-center gap-2">
                           <i 
                             onClick={(e) => toggleFavorite(e, primaryTense.id, v.name)}
                             className={`fa${isFav(primaryTense.id, v.name) ? 's' : 'r'} fa-heart text-[10px] md:text-sm ${isFav(primaryTense.id, v.name) ? 'text-white' : 'text-slate-600 hover:text-slate-400'}`}
                           ></i>
-                          {currentlyPlayingVerb === v.name && <WaveformIndicator color="bg-white" />}
+                          {currentlyPlayingVerb === v.name && <WaveformIndicator color="bg-white" isPaused={isPaused} />}
                         </div>
                       </div>
                       {currentlyPlayingVerb === v.name && <div className="absolute bottom-0 left-0 h-1 bg-white/30 transition-all" style={{width: `${audioProgress}%`}}></div>}
@@ -635,88 +700,15 @@ const App: React.FC = () => {
                   ))}
                 </div>
               </div>
-            )}
-
-            {irregularVerbs.length > 0 && (
-              <div>
-                <div className="flex justify-between items-center mb-3 px-2">
-                  <h4 className="text-[9px] md:text-[10px] font-black text-slate-500 tracking-[0.4em] uppercase">IRREGULARES</h4>
-                  <button onClick={() => readCategoryVerbs(irregularVerbs)} className="text-terracotta text-[8px] font-black tracking-widest uppercase">READ ALL</button>
-                </div>
-                <div className="grid grid-cols-2 lg:grid-cols-1 gap-2 md:gap-3">
-                  {irregularVerbs.map((v) => (
-                    <button
-                      key={v.name}
-                      onClick={() => { stopAudio(); setSelectedVerb(v); scrollToCard(); }}
-                      className={`relative overflow-hidden p-3.5 md:px-8 md:py-5 rounded-xl md:rounded-[1.5rem] text-left transition-all border-2 ${
-                        selectedVerb.name === v.name ? 'bg-terracotta text-white border-terracotta shadow-lg' : 'bg-white/[0.02] text-slate-400 border-white/5 hover:border-white/20'
-                      }`}
-                    >
-                      <div className="flex justify-between items-center mb-1">
-                        <span className="text-xs md:text-xl font-bold truncate pr-2">{v.name}</span>
-                        <div className="flex items-center gap-2">
-                           <i 
-                            onClick={(e) => toggleFavorite(e, primaryTense.id, v.name)}
-                            className={`fa${isFav(primaryTense.id, v.name) ? 's' : 'r'} fa-heart text-[10px] md:text-sm ${isFav(primaryTense.id, v.name) ? 'text-white' : 'text-slate-600 hover:text-slate-400'}`}
-                          ></i>
-                          {currentlyPlayingVerb === v.name && <WaveformIndicator color="bg-white" />}
-                        </div>
-                      </div>
-                      {currentlyPlayingVerb === v.name && <div className="absolute bottom-0 left-0 h-1 bg-white/30 transition-all" style={{width: `${audioProgress}%`}}></div>}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-            
-            {showOnlyFavorites && regularVerbs.length === 0 && irregularVerbs.length === 0 && (
-              <div className="py-20 text-center border-2 border-dashed border-white/5 rounded-[2rem]">
-                <i className="far fa-heart text-slate-800 text-4xl mb-4 block"></i>
-                <p className="text-slate-600 text-xs font-black tracking-widest uppercase">No favorites found</p>
-              </div>
-            )}
+            ))}
           </div>
         </div>
       </div>
 
-      {showIrregularModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/95 backdrop-blur-lg" onClick={() => setShowIrregularModal(false)}></div>
-          <div className="relative bg-zinc-900 w-full max-w-4xl max-h-[85vh] overflow-hidden rounded-[1.5rem] border border-white/10 flex flex-col">
-            <div className="p-5 border-b border-white/5 flex justify-between items-center">
-              <h2 className="text-xl font-black text-white">EL ARCHIVO</h2>
-              <button onClick={() => setShowIrregularModal(false)} className="w-8 h-8 rounded-full bg-white/5 text-white flex items-center justify-center transition-colors hover:bg-white/10"><i className="fas fa-times"></i></button>
-            </div>
-            <div className="flex-1 overflow-y-auto p-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {allIrregularVerbs.map((v, i) => (
-                <div key={i} className="bg-white/[0.02] rounded-xl border border-white/5 p-4">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="font-bold text-white text-sm">{v.name}</span>
-                    <span className="text-[7px] font-black px-2 py-0.5 rounded bg-terracotta/20 text-terracotta">{v.tenseId}</span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-1 text-[9px]">
-                    {v.conjugations.map((c, ci) => (
-                      <div key={ci} className="text-slate-400 truncate">
-                        <span className="text-slate-600 mr-1">{c.pronoun}:</span> 
-                        <HighlightedForm form={c.form} isIrregular={true} />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
       <footer className="mt-16 py-8 text-slate-700 text-center w-full border-t border-white/5">
         <div className="flex justify-center gap-6 mb-4">
-          <a href="https://heroyik.github.io" target="_blank" rel="noopener noreferrer" className="text-slate-500 hover:text-white transition-colors text-xl" title="Homepage">
-            <i className="fas fa-home"></i>
-          </a>
-          <a href="https://github.com/heroyik/vozviva" target="_blank" rel="noopener noreferrer" className="text-slate-500 hover:text-white transition-colors text-xl" title="GitHub Project">
-            <i className="fab fa-github"></i>
-          </a>
+          <a href="https://heroyik.github.io" target="_blank" rel="noopener noreferrer" className="text-slate-500 hover:text-white transition-colors text-xl"><i className="fas fa-home"></i></a>
+          <a href="https://github.com/heroyik/vozviva" target="_blank" rel="noopener noreferrer" className="text-slate-500 hover:text-white transition-colors text-xl"><i className="fab fa-github"></i></a>
         </div>
         <p className="text-[9px] font-black tracking-[0.4em] uppercase text-slate-500 mb-3">VOZVIVA Linguistica</p>
         <p className="text-[8px] font-medium opacity-20">Optimized for Mobile Linguistic Mastery.</p>
