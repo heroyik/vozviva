@@ -90,6 +90,7 @@ async function decodeAudioData(
 }
 
 const HighlightedForm: React.FC<{ form: string, isIrregular?: boolean }> = ({ form, isIrregular }) => {
+  if (form === '-') return <span className="text-slate-800 opacity-30 italic">N/A</span>;
   if (isIrregular) {
     return <span className="text-terracotta drop-shadow-[0_0_8px_rgba(226,114,91,0.4)]">{form}</span>;
   }
@@ -98,6 +99,7 @@ const HighlightedForm: React.FC<{ form: string, isIrregular?: boolean }> = ({ fo
     'amos', 'asteis', 'aron', 'isteis', 'ieron', 'íamos', 'íais', 'aban', 'abas', 'áramos', 'eremos', 'iremos', 'aréis', 'eréis', 'iréis',
     'ando', 'iendo', 'ado', 'ido', 
     'as', 'an', 'es', 'en', 'is', 'amos', 'emos', 'imos', 'áis', 'éis', 'ís',
+    'ad', 'ed', 'id', // Imperative plurals
     'é', 'ó', 'í', 'o', 'a', 'e'
   ];
 
@@ -278,6 +280,7 @@ const App: React.FC = () => {
 
     let script = `${verb.name}. `;
     verb.conjugations.forEach(c => {
+      if (c.form === '-') return; // Skip non-existent forms like 1st person singular in imperative
       const pronoun = c.pronoun.split('/')[0];
       script += `${pronoun} ${c.form}. `;
     });

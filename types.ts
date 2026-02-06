@@ -6,7 +6,9 @@ export enum Tense {
   IMPERFECT = 'Pretérito Imperfecto',
   FUTURE = 'Futuro Simple',
   PRESENT_PERFECT = 'Pretérito Perfecto',
-  PAST_PERFECT = 'Pretérito Pluscuamperfecto'
+  PAST_PERFECT = 'Pretérito Pluscuamperfecto',
+  AFFIRMATIVE_IMPERATIVE = 'Imperativo Afirmativo',
+  NEGATIVE_IMPERATIVE = 'Imperativo Negativo'
 }
 
 export interface Conjugation {

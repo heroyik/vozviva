@@ -90,20 +90,6 @@ export const SPANISH_VERB_DATA: TenseData[] = [
           { pronoun: "Yo", form: "estoy yendo" }, { pronoun: "Tú", form: "estás yendo" }, { pronoun: "Él/Ella/Ud.", form: "está yendo" },
           { pronoun: "Nosotros", form: "estamos yendo" }, { pronoun: "Vosotros", form: "estáis yendo" }, { pronoun: "Ellos/Ellas/Uds.", form: "están yendo" }
         ]
-      },
-      {
-        name: "Estar + Leer", translation: "읽고 있다", isIrregular: true,
-        conjugations: [
-          { pronoun: "Yo", form: "estoy leyendo" }, { pronoun: "Tú", form: "estás leyendo" }, { pronoun: "Él/Ella/Ud.", form: "está leyendo" },
-          { pronoun: "Nosotros", form: "estamos leyendo" }, { pronoun: "Vosotros", form: "estáis leyendo" }, { pronoun: "Ellos/Ellas/Uds.", form: "están leyendo" }
-        ]
-      },
-      {
-        name: "Estar + Decir", translation: "말하고 있다", isIrregular: true,
-        conjugations: [
-          { pronoun: "Yo", form: "estoy diciendo" }, { pronoun: "Tú", form: "estás diciendo" }, { pronoun: "Él/Ella/Ud.", form: "está diciendo" },
-          { pronoun: "Nosotros", form: "estamos diciendo" }, { pronoun: "Vosotros", form: "estáis diciendo" }, { pronoun: "Ellos/Ellas/Uds.", form: "están diciendo" }
-        ]
       }
     ]
   },
@@ -125,41 +111,6 @@ export const SPANISH_VERB_DATA: TenseData[] = [
           { pronoun: "Yo", form: "comí" }, { pronoun: "Tú", form: "comiste" }, { pronoun: "Él/Ella/Ud.", form: "comió" },
           { pronoun: "Nosotros", form: "comimos" }, { pronoun: "Vosotros", form: "comisteis" }, { pronoun: "Ellos/Ellas/Uds.", form: "comieron" }
         ]
-      },
-      {
-        name: "Vivir", translation: "살았다",
-        conjugations: [
-          { pronoun: "Yo", form: "viví" }, { pronoun: "Tú", form: "viviste" }, { pronoun: "Él/Ella/Ud.", form: "vivió" },
-          { pronoun: "Nosotros", form: "vivimos" }, { pronoun: "Vosotros", form: "vivisteis" }, { pronoun: "Ellos/Ellas/Uds.", form: "vivieron" }
-        ]
-      },
-      {
-        name: "Ser / Ir", translation: "이었다 / 갔다", isIrregular: true,
-        conjugations: [
-          { pronoun: "Yo", form: "fui" }, { pronoun: "Tú", form: "fuiste" }, { pronoun: "Él/Ella/Ud.", form: "fue" },
-          { pronoun: "Nosotros", form: "fuimos" }, { pronoun: "Vosotros", form: "fuisteis" }, { pronoun: "Ellos/Ellas/Uds.", form: "fueron" }
-        ]
-      },
-      {
-        name: "Hacer", translation: "했다", isIrregular: true,
-        conjugations: [
-          { pronoun: "Yo", form: "hice" }, { pronoun: "Tú", form: "hiciste" }, { pronoun: "Él/Ella/Ud.", form: "hizo" },
-          { pronoun: "Nosotros", form: "hicimos" }, { pronoun: "Vosotros", form: "hicisteis" }, { pronoun: "Ellos/Ellas/Uds.", form: "hicieron" }
-        ]
-      },
-      {
-        name: "Tener", translation: "가졌다", isIrregular: true,
-        conjugations: [
-          { pronoun: "Yo", form: "tuve" }, { pronoun: "Tú", form: "tuviste" }, { pronoun: "Él/Ella/Ud.", form: "tuvo" },
-          { pronoun: "Nosotros", form: "tuvimos" }, { pronoun: "Vosotros", form: "tuvisteis" }, { pronoun: "Ellos/Ellas/Uds.", form: "tuvieron" }
-        ]
-      },
-      {
-        name: "Estar", translation: "있었다", isIrregular: true,
-        conjugations: [
-          { pronoun: "Yo", form: "estuve" }, { pronoun: "Tú", form: "estuviste" }, { pronoun: "Él/Ella/Ud.", form: "estuvo" },
-          { pronoun: "Nosotros", form: "estuvimos" }, { pronoun: "Vosotros", form: "estuvisteis" }, { pronoun: "Ellos/Ellas/Uds.", form: "estuvieron" }
-        ]
       }
     ]
   },
@@ -173,41 +124,6 @@ export const SPANISH_VERB_DATA: TenseData[] = [
         conjugations: [
           { pronoun: "Yo", form: "hablaba" }, { pronoun: "Tú", form: "hablabas" }, { pronoun: "Él/Ella/Ud.", form: "hablaba" },
           { pronoun: "Nosotros", form: "hablábamos" }, { pronoun: "Vosotros", form: "hablabais" }, { pronoun: "Ellos/Ellas/Uds.", form: "hablaban" }
-        ]
-      },
-      {
-        name: "Comer", translation: "먹곤 했다",
-        conjugations: [
-          { pronoun: "Yo", form: "comía" }, { pronoun: "Tú", form: "comías" }, { pronoun: "Él/Ella/Ud.", form: "comía" },
-          { pronoun: "Nosotros", form: "comíamos" }, { pronoun: "Vosotros", form: "comíais" }, { pronoun: "Ellos/Ellas/Uds.", form: "comían" }
-        ]
-      },
-      {
-        name: "Vivir", translation: "살곤 했다",
-        conjugations: [
-          { pronoun: "Yo", form: "vivía" }, { pronoun: "Tú", form: "vivías" }, { pronoun: "Él/Ella/Ud.", form: "vivía" },
-          { pronoun: "Nosotros", form: "vivíamos" }, { pronoun: "Vosotros", form: "vivíais" }, { pronoun: "Ellos/Ellas/Uds.", form: "vivían" }
-        ]
-      },
-      {
-        name: "Ser", translation: "이곤 했다", isIrregular: true,
-        conjugations: [
-          { pronoun: "Yo", form: "era" }, { pronoun: "Tú", form: "eras" }, { pronoun: "Él/Ella/Ud.", form: "era" },
-          { pronoun: "Nosotros", form: "éramos" }, { pronoun: "Vosotros", form: "erais" }, { pronoun: "Ellos/Ellas/Uds.", form: "eran" }
-        ]
-      },
-      {
-        name: "Ir", translation: "가곤 했다", isIrregular: true,
-        conjugations: [
-          { pronoun: "Yo", form: "iba" }, { pronoun: "Tú", form: "ibas" }, { pronoun: "Él/Ella/Ud.", form: "iba" },
-          { pronoun: "Nosotros", form: "íbamos" }, { pronoun: "Vosotros", form: "ibais" }, { pronoun: "Ellos/Ellas/Uds.", form: "iban" }
-        ]
-      },
-      {
-        name: "Ver", translation: "보곤 했다", isIrregular: true,
-        conjugations: [
-          { pronoun: "Yo", form: "veía" }, { pronoun: "Tú", form: "veías" }, { pronoun: "Él/Ella/Ud.", form: "veía" },
-          { pronoun: "Nosotros", form: "veíamos" }, { pronoun: "Vosotros", form: "veíais" }, { pronoun: "Ellos/Ellas/Uds.", form: "veían" }
         ]
       }
     ]
@@ -223,48 +139,6 @@ export const SPANISH_VERB_DATA: TenseData[] = [
           { pronoun: "Yo", form: "hablaré" }, { pronoun: "Tú", form: "hablarás" }, { pronoun: "Él/Ella/Ud.", form: "hablará" },
           { pronoun: "Nosotros", form: "hablaremos" }, { pronoun: "Vosotros", form: "hablaréis" }, { pronoun: "Ellos/Ellas/Uds.", form: "hablarán" }
         ]
-      },
-      {
-        name: "Comer", translation: "먹을 것이다",
-        conjugations: [
-          { pronoun: "Yo", form: "comeré" }, { pronoun: "Tú", form: "comerás" }, { pronoun: "Él/Ella/Ud.", form: "comerá" },
-          { pronoun: "Nosotros", form: "comeremos" }, { pronoun: "Vosotros", form: "comeréis" }, { pronoun: "Ellos/Ellas/Uds.", form: "comerán" }
-        ]
-      },
-      {
-        name: "Vivir", translation: "살 것이다",
-        conjugations: [
-          { pronoun: "Yo", form: "viviré" }, { pronoun: "Tú", form: "vivirás" }, { pronoun: "Él/Ella/Ud.", form: "vivirá" },
-          { pronoun: "Nosotros", form: "viviremos" }, { pronoun: "Vosotros", form: "viviréis" }, { pronoun: "Ellos/Ellas/Uds.", form: "vivirán" }
-        ]
-      },
-      {
-        name: "Tener", translation: "가질 것이다", isIrregular: true,
-        conjugations: [
-          { pronoun: "Yo", form: "tendré" }, { pronoun: "Tú", form: "tendrás" }, { pronoun: "Él/Ella/Ud.", form: "tendrá" },
-          { pronoun: "Nosotros", form: "tendremos" }, { pronoun: "Vosotros", form: "tendréis" }, { pronoun: "Ellos/Ellas/Uds.", form: "tendrán" }
-        ]
-      },
-      {
-        name: "Hacer", translation: "할 것이다", isIrregular: true,
-        conjugations: [
-          { pronoun: "Yo", form: "haré" }, { pronoun: "Tú", form: "harás" }, { pronoun: "Él/Ella/Ud.", form: "hará" },
-          { pronoun: "Nosotros", form: "haremos" }, { pronoun: "Vosotros", form: "haréis" }, { pronoun: "Ellos/Ellas/Uds.", form: "harán" }
-        ]
-      },
-      {
-        name: "Poder", translation: "할 수 있을 것이다", isIrregular: true,
-        conjugations: [
-          { pronoun: "Yo", form: "podré" }, { pronoun: "Tú", form: "podrás" }, { pronoun: "Él/Ella/Ud.", form: "podrá" },
-          { pronoun: "Nosotros", form: "podremos" }, { pronoun: "Vosotros", form: "podréis" }, { pronoun: "Ellos/Ellas/Uds.", form: "podrán" }
-        ]
-      },
-      {
-        name: "Querer", translation: "원할 것이다", isIrregular: true,
-        conjugations: [
-          { pronoun: "Yo", form: "querré" }, { pronoun: "Tú", form: "querrás" }, { pronoun: "Él/Ella/Ud.", form: "querrá" },
-          { pronoun: "Nosotros", form: "querremos" }, { pronoun: "Vosotros", form: "querréis" }, { pronoun: "Ellos/Ellas/Uds.", form: "querrán" }
-        ]
       }
     ]
   },
@@ -278,41 +152,6 @@ export const SPANISH_VERB_DATA: TenseData[] = [
         conjugations: [
           { pronoun: "Yo", form: "he hablado" }, { pronoun: "Tú", form: "has hablado" }, { pronoun: "Él/Ella/Ud.", form: "ha hablado" },
           { pronoun: "Nosotros", form: "hemos hablado" }, { pronoun: "Vosotros", form: "habéis hablado" }, { pronoun: "Ellos/Ellas/Uds.", form: "han hablado" }
-        ]
-      },
-      {
-        name: "Haber + Comer", translation: "먹었다(현재까지 영향)",
-        conjugations: [
-          { pronoun: "Yo", form: "he comido" }, { pronoun: "Tú", form: "has comido" }, { pronoun: "Él/Ella/Ud.", form: "ha comido" },
-          { pronoun: "Nosotros", form: "hemos comido" }, { pronoun: "Vosotros", form: "habéis comido" }, { pronoun: "Ellos/Ellas/Uds.", form: "han comido" }
-        ]
-      },
-      {
-        name: "Haber + Vivir", translation: "살았다(현재까지 영향)",
-        conjugations: [
-          { pronoun: "Yo", form: "he vivido" }, { pronoun: "Tú", form: "has vivido" }, { pronoun: "Él/Ella/Ud.", form: "ha vivido" },
-          { pronoun: "Nosotros", form: "hemos vivido" }, { pronoun: "Vosotros", form: "habéis vivido" }, { pronoun: "Ellos/Ellas/Uds.", form: "han vivido" }
-        ]
-      },
-      {
-        name: "Haber + Hacer", translation: "했다(현재까지 영향)", isIrregular: true,
-        conjugations: [
-          { pronoun: "Yo", form: "he hecho" }, { pronoun: "Tú", form: "has hecho" }, { pronoun: "Él/Ella/Ud.", form: "ha hecho" },
-          { pronoun: "Nosotros", form: "hemos hecho" }, { pronoun: "Vosotros", form: "habéis hecho" }, { pronoun: "Ellos/Ellas/Uds.", form: "han hecho" }
-        ]
-      },
-      {
-        name: "Haber + Decir", translation: "말했다(현재까지 영향)", isIrregular: true,
-        conjugations: [
-          { pronoun: "Yo", form: "he dicho" }, { pronoun: "Tú", form: "has dicho" }, { pronoun: "Él/Ella/Ud.", form: "ha dicho" },
-          { pronoun: "Nosotros", form: "hemos dicho" }, { pronoun: "Vosotros", form: "habéis dicho" }, { pronoun: "Ellos/Ellas/Uds.", form: "han dicho" }
-        ]
-      },
-      {
-        name: "Haber + Ver", translation: "봤다(현재까지 영향)", isIrregular: true,
-        conjugations: [
-          { pronoun: "Yo", form: "he visto" }, { pronoun: "Tú", form: "has visto" }, { pronoun: "Él/Ella/Ud.", form: "ha visto" },
-          { pronoun: "Nosotros", form: "hemos visto" }, { pronoun: "Vosotros", form: "habéis visto" }, { pronoun: "Ellos/Ellas/Uds.", form: "han visto" }
         ]
       }
     ]
@@ -328,33 +167,201 @@ export const SPANISH_VERB_DATA: TenseData[] = [
           { pronoun: "Yo", form: "había hablado" }, { pronoun: "Tú", form: "habías hablado" }, { pronoun: "Él/Ella/Ud.", form: "había hablado" },
           { pronoun: "Nosotros", form: "habíamos hablado" }, { pronoun: "Vosotros", form: "habíais hablado" }, { pronoun: "Ellos/Ellas/Uds.", form: "habían hablado" }
         ]
-      },
+      }
+    ]
+  },
+  {
+    id: Tense.AFFIRMATIVE_IMPERATIVE,
+    title: "Imperativo Afirmativo (긍정 명령형)",
+    usage: "상대방에게 무엇을 하라고 명령하거나 권유할 때 사용합니다.",
+    verbs: [
       {
-        name: "Haber + Comer", translation: "먹었었었다",
+        name: "Hablar", translation: "말해라",
         conjugations: [
-          { pronoun: "Yo", form: "había comido" }, { pronoun: "Tú", form: "habías comido" }, { pronoun: "Él/Ella/Ud.", form: "había comido" },
-          { pronoun: "Nosotros", form: "habíamos comido" }, { pronoun: "Vosotros", form: "habíais comido" }, { pronoun: "Ellos/Ellas/Uds.", form: "habían comido" }
+          { pronoun: "Yo", form: "-" }, { pronoun: "Tú", form: "habla" }, { pronoun: "Él/Ella/Ud.", form: "hable" },
+          { pronoun: "Nosotros", form: "hablemos" }, { pronoun: "Vosotros", form: "hablad" }, { pronoun: "Ellos/Ellas/Uds.", form: "hablen" }
         ]
       },
       {
-        name: "Haber + Vivir", translation: "살았었었다",
+        name: "Comer", translation: "먹어라",
         conjugations: [
-          { pronoun: "Yo", form: "había vivido" }, { pronoun: "Tú", form: "habías vivido" }, { pronoun: "Él/Ella/Ud.", form: "había vivido" },
-          { pronoun: "Nosotros", form: "habíamos vivido" }, { pronoun: "Vosotros", form: "habíais vivido" }, { pronoun: "Ellos/Ellas/Uds.", form: "habían vivido" }
+          { pronoun: "Yo", form: "-" }, { pronoun: "Tú", form: "come" }, { pronoun: "Él/Ella/Ud.", form: "coma" },
+          { pronoun: "Nosotros", form: "comamos" }, { pronoun: "Vosotros", form: "comed" }, { pronoun: "Ellos/Ellas/Uds.", form: "coman" }
         ]
       },
       {
-        name: "Haber + Hacer", translation: "했었었다", isIrregular: true,
+        name: "Vivir", translation: "살아라",
         conjugations: [
-          { pronoun: "Yo", form: "había hecho" }, { pronoun: "Tú", form: "habías hecho" }, { pronoun: "Él/Ella/Ud.", form: "había hecho" },
-          { pronoun: "Nosotros", form: "habíamos hecho" }, { pronoun: "Vosotros", form: "habíais hecho" }, { pronoun: "Ellos/Ellas/Uds.", form: "habían hecho" }
+          { pronoun: "Yo", form: "-" }, { pronoun: "Tú", form: "vive" }, { pronoun: "Él/Ella/Ud.", form: "viva" },
+          { pronoun: "Nosotros", form: "vivamos" }, { pronoun: "Vosotros", form: "vivid" }, { pronoun: "Ellos/Ellas/Uds.", form: "vivan" }
         ]
       },
       {
-        name: "Haber + Abrir", translation: "열었었었다", isIrregular: true,
+        name: "Dar", translation: "주어라", isIrregular: true,
         conjugations: [
-          { pronoun: "Yo", form: "había abierto" }, { pronoun: "Tú", form: "habías abierto" }, { pronoun: "Él/Ella/Ud.", form: "había abierto" },
-          { pronoun: "Nosotros", form: "habíamos abierto" }, { pronoun: "Vosotros", form: "habíais abierto" }, { pronoun: "Ellos/Ellas/Uds.", form: "habían abierto" }
+          { pronoun: "Yo", form: "-" }, { pronoun: "Tú", form: "da" }, { pronoun: "Él/Ella/Ud.", form: "dé" },
+          { pronoun: "Nosotros", form: "demos" }, { pronoun: "Vosotros", form: "dad" }, { pronoun: "Ellos/Ellas/Uds.", form: "den" }
+        ]
+      },
+      {
+        name: "Ser", translation: "이어라", isIrregular: true,
+        conjugations: [
+          { pronoun: "Yo", form: "-" }, { pronoun: "Tú", form: "sé" }, { pronoun: "Él/Ella/Ud.", form: "sea" },
+          { pronoun: "Nosotros", form: "seamos" }, { pronoun: "Vosotros", form: "sed" }, { pronoun: "Ellos/Ellas/Uds.", form: "sean" }
+        ]
+      },
+      {
+        name: "Ver", translation: "보아라", isIrregular: true,
+        conjugations: [
+          { pronoun: "Yo", form: "-" }, { pronoun: "Tú", form: "ve" }, { pronoun: "Él/Ella/Ud.", form: "vea" },
+          { pronoun: "Nosotros", form: "veamos" }, { pronoun: "Vosotros", form: "ved" }, { pronoun: "Ellos/Ellas/Uds.", form: "vean" }
+        ]
+      },
+      {
+        name: "Ir", translation: "가라", isIrregular: true,
+        conjugations: [
+          { pronoun: "Yo", form: "-" }, { pronoun: "Tú", form: "ve" }, { pronoun: "Él/Ella/Ud.", form: "vaya" },
+          { pronoun: "Nosotros", form: "vayamos" }, { pronoun: "Vosotros", form: "id" }, { pronoun: "Ellos/Ellas/Uds.", form: "vayan" }
+        ]
+      },
+      {
+        name: "Decir", translation: "말해라", isIrregular: true,
+        conjugations: [
+          { pronoun: "Yo", form: "-" }, { pronoun: "Tú", form: "di" }, { pronoun: "Él/Ella/Ud.", form: "diga" },
+          { pronoun: "Nosotros", form: "digamos" }, { pronoun: "Vosotros", form: "decid" }, { pronoun: "Ellos/Ellas/Uds.", form: "digan" }
+        ]
+      },
+      {
+        name: "Hacer", translation: "해라", isIrregular: true,
+        conjugations: [
+          { pronoun: "Yo", form: "-" }, { pronoun: "Tú", form: "haz" }, { pronoun: "Él/Ella/Ud.", form: "haga" },
+          { pronoun: "Nosotros", form: "hagamos" }, { pronoun: "Vosotros", form: "haced" }, { pronoun: "Ellos/Ellas/Uds.", form: "hagan" }
+        ]
+      },
+      {
+        name: "Poner", translation: "놓아라", isIrregular: true,
+        conjugations: [
+          { pronoun: "Yo", form: "-" }, { pronoun: "Tú", form: "pon" }, { pronoun: "Él/Ella/Ud.", form: "ponga" },
+          { pronoun: "Nosotros", form: "pongamos" }, { pronoun: "Vosotros", form: "poned" }, { pronoun: "Ellos/Ellas/Uds.", form: "pongan" }
+        ]
+      },
+      {
+        name: "Salir", translation: "나가라", isIrregular: true,
+        conjugations: [
+          { pronoun: "Yo", form: "-" }, { pronoun: "Tú", form: "sal" }, { pronoun: "Él/Ella/Ud.", form: "salga" },
+          { pronoun: "Nosotros", form: "salgamos" }, { pronoun: "Vosotros", form: "salid" }, { pronoun: "Ellos/Ellas/Uds.", form: "salgan" }
+        ]
+      },
+      {
+        name: "Tener", translation: "가져라", isIrregular: true,
+        conjugations: [
+          { pronoun: "Yo", form: "-" }, { pronoun: "Tú", form: "ten" }, { pronoun: "Él/Ella/Ud.", form: "tenga" },
+          { pronoun: "Nosotros", form: "tengamos" }, { pronoun: "Vosotros", form: "tened" }, { pronoun: "Ellos/Ellas/Uds.", form: "tengan" }
+        ]
+      },
+      {
+        name: "Venir", translation: "와라", isIrregular: true,
+        conjugations: [
+          { pronoun: "Yo", form: "-" }, { pronoun: "Tú", form: "ven" }, { pronoun: "Él/Ella/Ud.", form: "venga" },
+          { pronoun: "Nosotros", form: "vengamos" }, { pronoun: "Vosotros", form: "venid" }, { pronoun: "Ellos/Ellas/Uds.", form: "vengan" }
+        ]
+      }
+    ]
+  },
+  {
+    id: Tense.NEGATIVE_IMPERATIVE,
+    title: "Imperativo Negativo (부정 명령형)",
+    usage: "상대방에게 무엇을 하지 말라고 명령할 때 사용합니다 (No + 접속법 현재).",
+    verbs: [
+      {
+        name: "Hablar", translation: "말하지 마라",
+        conjugations: [
+          { pronoun: "Yo", form: "-" }, { pronoun: "Tú", form: "no hables" }, { pronoun: "Él/Ella/Ud.", form: "no hable" },
+          { pronoun: "Nosotros", form: "no hablemos" }, { pronoun: "Vosotros", form: "no habléis" }, { pronoun: "Ellos/Ellas/Uds.", form: "no hablen" }
+        ]
+      },
+      {
+        name: "Comer", translation: "먹지 마라",
+        conjugations: [
+          { pronoun: "Yo", form: "-" }, { pronoun: "Tú", form: "no comas" }, { pronoun: "Él/Ella/Ud.", form: "no coma" },
+          { pronoun: "Nosotros", form: "no comamos" }, { pronoun: "Vosotros", form: "no comáis" }, { pronoun: "Ellos/Ellas/Uds.", form: "no coman" }
+        ]
+      },
+      {
+        name: "Vivir", translation: "살지 마라",
+        conjugations: [
+          { pronoun: "Yo", form: "-" }, { pronoun: "Tú", form: "no vivas" }, { pronoun: "Él/Ella/Ud.", form: "no viva" },
+          { pronoun: "Nosotros", form: "no vivamos" }, { pronoun: "Vosotros", form: "no viváis" }, { pronoun: "Ellos/Ellas/Uds.", form: "no vivan" }
+        ]
+      },
+      {
+        name: "Dar", translation: "주지 마라", isIrregular: true,
+        conjugations: [
+          { pronoun: "Yo", form: "-" }, { pronoun: "Tú", form: "no des" }, { pronoun: "Él/Ella/Ud.", form: "no dé" },
+          { pronoun: "Nosotros", form: "no demos" }, { pronoun: "Vosotros", form: "no deis" }, { pronoun: "Ellos/Ellas/Uds.", form: "no den" }
+        ]
+      },
+      {
+        name: "Ser", translation: "이지 마라", isIrregular: true,
+        conjugations: [
+          { pronoun: "Yo", form: "-" }, { pronoun: "Tú", form: "no seas" }, { pronoun: "Él/Ella/Ud.", form: "no sea" },
+          { pronoun: "Nosotros", form: "no seamos" }, { pronoun: "Vosotros", form: "no seáis" }, { pronoun: "Ellos/Ellas/Uds.", form: "no sean" }
+        ]
+      },
+      {
+        name: "Ver", translation: "보지 마라", isIrregular: true,
+        conjugations: [
+          { pronoun: "Yo", form: "-" }, { pronoun: "Tú", form: "no veas" }, { pronoun: "Él/Ella/Ud.", form: "no vea" },
+          { pronoun: "Nosotros", form: "no veamos" }, { pronoun: "Vosotros", form: "no veáis" }, { pronoun: "Ellos/Ellas/Uds.", form: "no vean" }
+        ]
+      },
+      {
+        name: "Ir", translation: "가지 마라", isIrregular: true,
+        conjugations: [
+          { pronoun: "Yo", form: "-" }, { pronoun: "Tú", form: "no vayas" }, { pronoun: "Él/Ella/Ud.", form: "no vaya" },
+          { pronoun: "Nosotros", form: "no vayamos" }, { pronoun: "Vosotros", form: "no vayáis" }, { pronoun: "Ellos/Ellas/Uds.", form: "no vayan" }
+        ]
+      },
+      {
+        name: "Decir", translation: "말하지 마라", isIrregular: true,
+        conjugations: [
+          { pronoun: "Yo", form: "-" }, { pronoun: "Tú", form: "no digas" }, { pronoun: "Él/Ella/Ud.", form: "no diga" },
+          { pronoun: "Nosotros", form: "no digamos" }, { pronoun: "Vosotros", form: "no digáis" }, { pronoun: "Ellos/Ellas/Uds.", form: "no digan" }
+        ]
+      },
+      {
+        name: "Hacer", translation: "하지 마라", isIrregular: true,
+        conjugations: [
+          { pronoun: "Yo", form: "-" }, { pronoun: "Tú", form: "no hagas" }, { pronoun: "Él/Ella/Ud.", form: "no haga" },
+          { pronoun: "Nosotros", form: "no hagamos" }, { pronoun: "Vosotros", form: "no hagáis" }, { pronoun: "Ellos/Ellas/Uds.", form: "no hagan" }
+        ]
+      },
+      {
+        name: "Poner", translation: "놓지 마라", isIrregular: true,
+        conjugations: [
+          { pronoun: "Yo", form: "-" }, { pronoun: "Tú", form: "no pongas" }, { pronoun: "Él/Ella/Ud.", form: "no ponga" },
+          { pronoun: "Nosotros", form: "no pongamos" }, { pronoun: "Vosotros", form: "no pongáis" }, { pronoun: "Ellos/Ellas/Uds.", form: "no pongan" }
+        ]
+      },
+      {
+        name: "Salir", translation: "나가지 마라", isIrregular: true,
+        conjugations: [
+          { pronoun: "Yo", form: "-" }, { pronoun: "Tú", form: "no salgas" }, { pronoun: "Él/Ella/Ud.", form: "no salga" },
+          { pronoun: "Nosotros", form: "no salgamos" }, { pronoun: "Vosotros", form: "no salgáis" }, { pronoun: "Ellos/Ellas/Uds.", form: "no salgan" }
+        ]
+      },
+      {
+        name: "Tener", translation: "가지지 마라", isIrregular: true,
+        conjugations: [
+          { pronoun: "Yo", form: "-" }, { pronoun: "Tú", form: "no tengas" }, { pronoun: "Él/Ella/Ud.", form: "no tenga" },
+          { pronoun: "Nosotros", form: "no tengamos" }, { pronoun: "Vosotros", form: "no tengáis" }, { pronoun: "Ellos/Ellas/Uds.", form: "no tengan" }
+        ]
+      },
+      {
+        name: "Venir", translation: "오지 마라", isIrregular: true,
+        conjugations: [
+          { pronoun: "Yo", form: "-" }, { pronoun: "Tú", form: "no vengas" }, { pronoun: "Él/Ella/Ud.", form: "no venga" },
+          { pronoun: "Nosotros", form: "no vengamos" }, { pronoun: "Vosotros", form: "no vengáis" }, { pronoun: "Ellos/Ellas/Uds.", form: "no vengan" }
         ]
       }
     ]
