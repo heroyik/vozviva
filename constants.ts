@@ -207,7 +207,7 @@ export const SPANISH_VERB_DATA: TenseData[] = [
         name: "Ser", translation: "이어라", isIrregular: true,
         conjugations: [
           { pronoun: "Yo", form: "-" }, { pronoun: "Tú", form: "sé" }, { pronoun: "Él/Ella/Ud.", form: "sea" },
-          { pronoun: "Nosotros", form: "seamos" }, { pronoun: "Vosotros", form: "sed" }, { pronoun: "Ellos/Ellas/Uds.", form: "sean" }
+          { pronoun: "Nosotros", form: "seamos" }, { pronoun: "Vosotros", form: "sed" }, { pronoun: "Ellos/Ellas/Uds.", form: "sed" }
         ]
       },
       {

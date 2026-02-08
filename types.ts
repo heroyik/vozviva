@@ -1,14 +1,14 @@
 
 export enum Tense {
   PRESENT = 'Presente',
-  PROGRESSIVE = 'Presente Progresivo',
-  PRETERITE = 'Pretérito Indefinido',
-  IMPERFECT = 'Pretérito Imperfecto',
-  FUTURE = 'Futuro Simple',
-  PRESENT_PERFECT = 'Pretérito Perfecto',
-  PAST_PERFECT = 'Pretérito Pluscuamperfecto',
-  AFFIRMATIVE_IMPERATIVE = 'Imperativo Afirmativo',
-  NEGATIVE_IMPERATIVE = 'Imperativo Negativo'
+  PROGRESSIVE = 'P. Progresivo',
+  PRETERITE = 'Indefinido',
+  IMPERFECT = 'Imperfecto',
+  FUTURE = 'Futuro',
+  PRESENT_PERFECT = 'P. Perfecto',
+  PAST_PERFECT = 'Pluscuamp.',
+  AFFIRMATIVE_IMPERATIVE = 'Imp. Afirmativo',
+  NEGATIVE_IMPERATIVE = 'Imp. Negativo'
 }
 
 export interface Conjugation {

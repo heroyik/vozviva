@@ -497,7 +497,7 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen px-4 py-4 md:p-8 xl:p-12 flex flex-col items-center max-w-[1600px] mx-auto pb-24 relative overflow-x-hidden">
       {/* Brand Header */}
-      <header className="w-full mb-6 md:mb-12 xl:mb-16 flex flex-col md:flex-row justify-between items-center gap-6">
+      <header className="w-full mb-6 md:mb-12 xl:mb-16 flex flex-col md:flex-row justify-between items-center gap-6 px-2">
         <div className="text-center md:text-left relative group">
           <h1 className={`text-4xl md:text-8xl xl:text-[7rem] font-black mb-0 md:mb-1 tracking-tighter transition-all duration-700 ${isAllCached ? 'text-amber-400 drop-shadow-[0_0_20px_rgba(251,191,36,0.4)]' : 'text-white'}`}>
             VOZ<span className={isAllCached ? 'text-white' : 'text-terracotta'}>VIVA</span>
@@ -566,8 +566,8 @@ const App: React.FC = () => {
         </div>
       </header>
 
-      {/* Tense Grid Selector */}
-      <nav className="w-full mb-6 md:mb-10 xl:mb-12">
+      {/* Tense Grid Selector - Added px-4 for mobile safety */}
+      <nav className="w-full px-4 md:px-8 mb-6 md:mb-10 xl:mb-12 overflow-visible">
         <div className="tense-grid">
           {SPANISH_VERB_DATA.map((t) => (
             <button
@@ -580,12 +580,12 @@ const App: React.FC = () => {
               }`}
             >
               {isTenseCached(t.id) && (
-                <div className="absolute -top-2 -right-2 w-5 h-5 md:w-7 md:h-7 bg-med-teal text-white rounded-full flex items-center justify-center text-[7px] md:text-[10px] shadow-lg border-2 border-zinc-900 z-10">
+                <div className="absolute -top-1.5 -right-1.5 w-5 h-5 md:w-7 md:h-7 bg-med-teal text-white rounded-full flex items-center justify-center text-[7px] md:text-[10px] shadow-lg border-2 border-zinc-900 z-10">
                   <i className="fas fa-check"></i>
                 </div>
               )}
               <div className="flex flex-col items-center gap-2">
-                <span className="truncate w-full text-center">{t.id}</span>
+                <span className="truncate w-full text-center px-1">{t.id}</span>
                 <i 
                   onClick={(e) => toggleTenseFavorite(e, t.id)}
                   className={`fa${isTenseFav(t.id) ? 's' : 'r'} fa-heart text-[10px] transition-colors ${
@@ -598,7 +598,7 @@ const App: React.FC = () => {
         </div>
       </nav>
 
-      <div className="w-full flex flex-col lg:grid lg:grid-cols-12 gap-8 xl:gap-12 items-start">
+      <div className="w-full flex flex-col lg:grid lg:grid-cols-12 gap-8 xl:gap-12 items-start px-2">
         {/* Main Verb Card Area */}
         <div className="w-full order-1 lg:order-2 lg:col-span-8 xl:col-span-9 scroll-mt-6 md:scroll-mt-10" ref={cardRef}>
           <section className="bg-white/[0.02] border border-white/10 rounded-[2rem] md:rounded-[3.5rem] overflow-hidden shadow-2xl relative">
