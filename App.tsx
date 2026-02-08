@@ -174,6 +174,7 @@ const App: React.FC = () => {
   const [tenseFavorites, setTenseFavorites] = useState<Set<string>>(new Set());
   const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
   const [cachedKeys, setCachedKeys] = useState<Set<string>>(new Set());
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   
   const audioContext = useRef<AudioContext | null>(null);
   const currentSource = useRef<AudioBufferSourceNode | null>(null);
@@ -257,14 +258,14 @@ const App: React.FC = () => {
   };
 
   const getVerbAudioBuffer = async (tense: TenseData, verb: Verb, prefixWithTense: boolean = false): Promise<Uint8Array | null> => {
-    // 속도 균일화를 위해 캐시 키 버전을 v3로 업데이트
     const baseKey = `v3_${getVerbKey(tense.id, verb.name)}`;
     const cacheKey = prefixWithTense ? `prefixed_${baseKey}` : baseKey;
     
     const cachedData = await audioStore.get(cacheKey);
     if (cachedData) return cachedData;
 
-    // "일정한 정상 속도"를 유지하기 위한 프롬프트 지침
+    if (stopRequested.current) return null;
+
     const speedInstruction = "Speak clearly at a natural, standard, and consistent native speed. Maintain the same pace for all phrases, avoiding any sudden changes in speed: ";
     let script = speedInstruction + (prefixWithTense ? `${tense.id}. ` : "");
     script += `${verb.name}. `;
@@ -273,6 +274,8 @@ const App: React.FC = () => {
     });
 
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    
+    // No retry loop - Execute once
     try {
       const response = await ai.models.generateContent({
         model: "gemini-2.5-flash-preview-tts",
@@ -289,7 +292,55 @@ const App: React.FC = () => {
         if (!prefixWithTense) setCachedKeys(prev => new Set([...Array.from(prev), cacheKey]));
         return rawBytes;
       }
-    } catch (err) { console.error(err); }
+    } catch (err: any) {
+      const isRateLimit = err.status === 429 || err.code === 429 || 
+                          (err.message && (err.message.includes('429') || err.message.includes('quota') || err.message.includes('RESOURCE_EXHAUSTED')));
+      
+      if (isRateLimit) {
+        let waitSeconds = 60; // 기본 대기 시간 (60초)
+        
+        // Retry-After 헤더 파싱 시도
+        // Gemini API나 SDK 버전에 따라 에러 객체 구조가 다를 수 있어 방어적 코딩 적용
+        if (err.response?.headers) {
+          try {
+            const headers = err.response.headers;
+            // Headers 객체 또는 일반 객체 처리
+            const retryAfter = typeof headers.get === 'function' 
+              ? headers.get('Retry-After') || headers.get('retry-after')
+              : headers['Retry-After'] || headers['retry-after'];
+            
+            if (retryAfter) {
+              if (/^\d+$/.test(retryAfter)) {
+                // 초 단위로 주어지는 경우
+                waitSeconds = parseInt(retryAfter, 10);
+              } else {
+                // HTTP 날짜 포맷 (예: Wed, 21 Oct 2015 07:28:00 GMT)으로 주어지는 경우
+                const date = new Date(retryAfter);
+                if (!isNaN(date.getTime())) {
+                    const diff = Math.ceil((date.getTime() - Date.now()) / 1000);
+                    if (diff > 0) waitSeconds = diff;
+                }
+              }
+            }
+          } catch (e) {
+            console.warn("Failed to parse Retry-After header", e);
+          }
+        }
+
+        const now = new Date();
+        const retryTime = new Date(now.getTime() + waitSeconds * 1000); 
+        const timeString = retryTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+        setErrorMessage(`API 할당량(Quota)이 소진되었습니다.\n즉시 실행을 중단합니다.\n다음 시간 이후에 다시 시도해주세요:\n\n[ ${timeString} ]\n\n(약 ${waitSeconds}초 대기 필요)`);
+        stopRequested.current = true; // 중요: 전역 중단 플래그 설정
+        return null;
+      } else {
+        console.error("API Error:", err);
+        setErrorMessage("오디오 생성 중 오류가 발생했습니다.");
+        stopRequested.current = true;
+        return null;
+      }
+    }
     return null;
   };
 
@@ -331,9 +382,12 @@ const App: React.FC = () => {
         const buffer = await decodeAudioData(raw, audioContext.current!, 24000, 1);
         setIsTTSLoading(false);
         await playBuffer(buffer);
-      } else break;
+      } else {
+        break; // Error or Stop requested
+      }
     } while (isRepeatEnabledRef.current && !stopRequested.current);
     setIsAudioPlaying(false); setCurrentlyPlayingVerb(null);
+    setIsTTSLoading(false);
   };
 
   const downloadTensePacks = async () => {
@@ -346,19 +400,30 @@ const App: React.FC = () => {
     }
 
     setIsDownloading(true);
+    stopRequested.current = false;
     
     try {
       for (const tense of favoriteTenses) {
+        if (stopRequested.current) break;
         setCurrentDownloadingTense(tense.id);
         setDownloadProgress(0);
         const audioChunks: Uint8Array[] = [];
 
         for (let i = 0; i < tense.verbs.length; i++) {
+          if (stopRequested.current) break;
           const verb = tense.verbs[i];
           const raw = await getVerbAudioBuffer(tense, verb, i === 0);
-          if (raw) audioChunks.push(raw);
+          
+          if (!raw) {
+             // getVerbAudioBuffer returns null on error/stop.
+             // stopRequested.current is already true if it was an error.
+             break;
+          }
+          audioChunks.push(raw);
           setDownloadProgress(Math.round(((i + 1) / tense.verbs.length) * 100));
         }
+
+        if (stopRequested.current) break;
 
         const totalLength = audioChunks.reduce((acc, chunk) => acc + chunk.length, 0);
         const finalAudio = new Uint8Array(totalLength + 44);
@@ -383,7 +448,7 @@ const App: React.FC = () => {
       }
     } catch (err) {
       console.error(err);
-      alert("다운로드 중 오류가 발생했습니다.");
+      setErrorMessage("다운로드 중 알 수 없는 오류가 발생했습니다.");
     } finally {
       setIsDownloading(false);
       setCurrentDownloadingTense(null);
@@ -419,11 +484,14 @@ const App: React.FC = () => {
           setIsTTSLoading(false);
           await playBuffer(buffer);
           if (!stopRequested.current) await new Promise(r => setTimeout(r, 800));
+        } else {
+           break;
         }
       }
       if (isRepeatEnabledRef.current && !stopRequested.current) await new Promise(r => setTimeout(r, 1500));
     } while (isRepeatEnabledRef.current && !stopRequested.current);
     setIsAudioPlaying(false); setCurrentlyPlayingVerb(null);
+    setIsTTSLoading(false);
   };
 
   const readCategoryVerbs = async (verbs: Verb[]) => {
@@ -440,11 +508,14 @@ const App: React.FC = () => {
           setIsTTSLoading(false);
           await playBuffer(buffer);
           if (!stopRequested.current) await new Promise(r => setTimeout(r, 800));
+        } else {
+            break;
         }
       }
       if (isRepeatEnabledRef.current && !stopRequested.current) await new Promise(r => setTimeout(r, 1500));
     } while (isRepeatEnabledRef.current && !stopRequested.current);
     setIsAudioPlaying(false); setCurrentlyPlayingVerb(null);
+    setIsTTSLoading(false);
   };
 
   const parsedTitle = useMemo(() => {
@@ -455,6 +526,27 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen px-4 py-4 md:p-8 xl:p-12 flex flex-col items-center max-w-[1600px] mx-auto pb-24 relative overflow-x-hidden">
+      {/* Error Modal */}
+      {errorMessage && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-slate-900 border border-terracotta/50 p-6 md:p-8 rounded-2xl max-w-md w-full shadow-2xl relative">
+            <div className="flex flex-col items-center text-center">
+              <div className="w-16 h-16 rounded-full bg-terracotta/10 flex items-center justify-center mb-4">
+                <i className="fas fa-exclamation-triangle text-terracotta text-2xl"></i>
+              </div>
+              <h3 className="text-white text-xl font-bold mb-2">Error Occurred</h3>
+              <p className="text-slate-300 mb-6 font-light whitespace-pre-line leading-relaxed">{errorMessage}</p>
+              <button 
+                onClick={() => setErrorMessage(null)} 
+                className="w-full bg-terracotta hover:bg-terracotta/90 text-white font-bold py-3 px-6 rounded-xl transition-colors tracking-wide"
+              >
+                DISMISS
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <header className="w-full mb-6 md:mb-12 xl:mb-16 flex flex-col md:flex-row justify-between items-center gap-6 px-2">
         <div className="text-center md:text-left relative">
           <h1 className={`text-4xl md:text-8xl xl:text-[7rem] font-black tracking-tighter transition-all duration-700 ${isAllCached ? 'text-amber-400 drop-shadow-[0_0_20px_rgba(251,191,36,0.4)]' : 'text-white'}`}>
