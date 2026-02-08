@@ -549,6 +549,13 @@ const App: React.FC = () => {
 
       <header className="w-full mb-6 md:mb-12 xl:mb-16 flex flex-col md:flex-row justify-between items-center gap-6 px-2">
         <div className="text-center md:text-left relative">
+          {isAllCached && (
+            <div className="absolute -top-6 left-1/2 -translate-x-1/2 md:left-1 md:translate-x-0 animate-in fade-in slide-in-from-bottom-2 duration-700">
+               <span className="bg-amber-400 text-black text-[9px] md:text-[10px] font-black px-2 py-0.5 rounded shadow-[0_0_10px_rgba(251,191,36,0.6)] tracking-[0.2em] uppercase flex items-center gap-1.5">
+                <i className="fas fa-check-circle"></i> OFFLINE READY
+              </span>
+            </div>
+          )}
           <h1 className={`text-4xl md:text-8xl xl:text-[7rem] font-black tracking-tighter transition-all duration-700 ${isAllCached ? 'text-amber-400 drop-shadow-[0_0_20px_rgba(251,191,36,0.4)]' : 'text-white'}`}>
             VOZ<span className={isAllCached ? 'text-white' : 'text-terracotta'}>VIVA</span>
           </h1>
