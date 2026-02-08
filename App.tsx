@@ -187,7 +187,7 @@ const App: React.FC = () => {
   useEffect(() => { audioStore.getAllKeys().then(keys => setCachedKeys(new Set(keys))); }, []);
 
   const getVerbKey = (tenseId: string, verbName: string) => `${tenseId}_${verbName}`;
-  const isVerbCached = (tenseId: string, verbName: string) => cachedKeys.has(getVerbKey(tenseId, verbName));
+  const isVerbCached = (tenseId: string, verbName: string) => cachedKeys.has(`v3_${getVerbKey(tenseId, verbName)}`);
   const isTenseCached = (tenseId: string) => {
     const tense = SPANISH_VERB_DATA.find(t => t.id === tenseId);
     return tense ? tense.verbs.every(v => isVerbCached(tenseId, v.name)) : false;
