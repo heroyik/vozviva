@@ -34,6 +34,18 @@
 - **Zero Retry 정책**: API 할당량 초과(429 Error) 시 불필요한 재시도를 하지 않고, 시스템 보호를 위해 **즉시 요청을 중단**합니다.
 - **정밀 헤더 분석**: 응답 헤더(`Retry-After`)를 자동으로 분석하여, 정확히 **몇 시 몇 분 몇 초**에 다시 사용이 가능한지 사용자에게 구체적인 시각을 안내합니다.
 
+### 7. 커리큘럼 확장 (Curriculum Expansion) 🆕
+- **부정 명령형(Imperativo Negativo) 완전 정복**: 규칙 동사(`Hablar`, `Comer`, `Vivir`)와 함께 접속법 현재형을 사용하는 주요 불규칙 동사 10종(`Dar`, `Ser`, `Ver`, `Ir`, `Decir`, `Hacer`, `Poner`, `Salir`, `Tener`, `Venir`)을 추가하여 명령법 학습을 완성합니다.
+- **불완료 과거(Pretérito Imperfecto) 마스터**: 해당 시제에서 유일하게 불규칙한 3대 동사 `Ser`, `Ir`, `Ver`를 모두 포함하였으며, 학습 빈도가 높은 주요 동사 `Estar`(규칙)를 추가하여 완벽 대비합니다.
+- **현재 완료(Pretérito Perfecto) 불규칙 마스터**: 과거분사가 불규칙하게 변하는 주요 동사(`Hecho`, `Puesto`, `Escrito`, `Dicho`, `Vuelto`, `Abierto`, `Roto`, `Leído`)를 추가하여 완료 시제 활용 능력을 극대화합니다.
+- **단순 미래(Futuro Simple) 불규칙 마스터**: 미래 시제에서 어간이 변하는 주요 불규칙 동사 10종(`Decir`, `Hacer`, `Poder`, `Querer`, `Saber`, `Salir`, `Tener`, `Venir`, `Poner`, `Haber`)을 완벽하게 지원합니다.
+- **단순 과거(Pretérito Indefinido) 불규칙 심화**: 학습 난이도가 높은 불규칙 동사 12종을 집중적으로 보강했습니다.
+  - **U-Stem Group**: `Estar`(Estuve), `Tener`(Tuve), `Poder`(Pude), `Poner`(Puse), `Saber`(Supe), `Haber (Hay)`(Hubo)
+  - **I-Stem Group**: `Querer`(Quise), `Venir`(Vine), `Hacer`(Hice)
+  - **J-Stem Group**: `Decir`(Dije), `Traer`, `Conducir` 등의 패턴을 대표하는 동사
+  - **Total Irregulars**: `Ser`/`Ir`(Fui), `Dar`(Di)
+- **현재 진행 시제(Presente Progresivo) 강화**: 빈도수가 높은 불규칙 동사 6종(`Leer`, `Repetir`, `Decir`, `Venir`, `Dormir`, `Morir`)을 포함하여 진행형 불규칙 패턴 학습을 지원합니다.
+
 ---
 
 ## 🛠️ 기술 스택 (Tech Stack)

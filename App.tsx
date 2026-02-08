@@ -138,7 +138,7 @@ const HighlightedForm: React.FC<{ form: string, isIrregular?: boolean }> = ({ fo
   }
 
   return (
-    <span className="inline-flex">
+    <span>
       <span className="text-white opacity-90">{stem}</span>
       <span className="text-med-teal font-black">{ending}</span>
     </span>
