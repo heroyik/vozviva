@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Tense, TenseData, Verb } from './types';
 import { SPANISH_VERB_DATA } from './constants';
@@ -548,18 +547,18 @@ const App: React.FC = () => {
       )}
 
       <header className="w-full mb-6 md:mb-12 xl:mb-16 flex flex-col md:flex-row justify-between items-center gap-6 px-2">
-        <div className="text-center md:text-left relative">
-          {isAllCached && (
-            <div className="absolute -top-6 left-1/2 -translate-x-1/2 md:left-1 md:translate-x-0 animate-in fade-in slide-in-from-bottom-2 duration-700">
-               <span className="bg-amber-400 text-black text-[9px] md:text-[10px] font-black px-2 py-0.5 rounded shadow-[0_0_10px_rgba(251,191,36,0.6)] tracking-[0.2em] uppercase flex items-center gap-1.5">
+        <div className="text-center md:text-left flex flex-col items-center md:items-start relative">
+          <div className="flex items-center gap-2 md:gap-4">
+            <h1 className={`text-4xl md:text-8xl xl:text-[7rem] font-black tracking-tighter transition-all duration-700 leading-none ${isAllCached ? 'text-amber-400 drop-shadow-[0_0_20px_rgba(251,191,36,0.4)]' : 'text-white'}`}>
+              VOZ<span className={isAllCached ? 'text-white' : 'text-terracotta'}>VIVA</span>
+            </h1>
+            {isAllCached && (
+               <span className="animate-pulse bg-amber-400 text-black text-[9px] md:text-sm font-black px-2 py-0.5 md:px-3 md:py-1 rounded shadow-[0_0_10px_rgba(251,191,36,0.6)] tracking-widest uppercase flex items-center gap-1.5 whitespace-nowrap self-center mt-1 md:mt-2">
                 <i className="fas fa-check-circle"></i> OFFLINE READY
               </span>
-            </div>
-          )}
-          <h1 className={`text-4xl md:text-8xl xl:text-[7rem] font-black tracking-tighter transition-all duration-700 ${isAllCached ? 'text-amber-400 drop-shadow-[0_0_20px_rgba(251,191,36,0.4)]' : 'text-white'}`}>
-            VOZ<span className={isAllCached ? 'text-white' : 'text-terracotta'}>VIVA</span>
-          </h1>
-          <p className="text-slate-500 font-light text-[8px] md:text-sm tracking-[0.3em] uppercase">Advanced Linguistic Training</p>
+            )}
+          </div>
+          <p className="text-slate-500 font-light text-[8px] md:text-sm tracking-[0.3em] uppercase mt-2 md:mt-4">Advanced Linguistic Training</p>
         </div>
         
         <div className="flex flex-row gap-3 w-full sm:w-auto">
@@ -687,8 +686,15 @@ const App: React.FC = () => {
         </div>
       </div>
       <footer className="mt-24 py-12 text-slate-700 text-center w-full border-t border-white/5">
-        <p className="text-[10px] md:text-sm font-black tracking-[0.4em] uppercase text-slate-500 mb-4">VOZVIVA Linguistica</p>
-        <p className="text-[9px] md:text-xs font-medium opacity-20">Linguistic Mastery Export Ready.</p>
+        <p className="text-[10px] md:text-sm font-black tracking-[0.4em] uppercase text-slate-500 mb-6">VOZVIVA Linguistica</p>
+        <div className="flex justify-center gap-8">
+          <a href="https://heroyik.github.io" target="_blank" rel="noopener noreferrer" className="text-slate-600 hover:text-terracotta transition-colors duration-300 transform hover:scale-110">
+            <i className="fas fa-globe text-xl md:text-2xl"></i>
+          </a>
+          <a href="https://github.com/heroyik/vozviva" target="_blank" rel="noopener noreferrer" className="text-slate-600 hover:text-white transition-colors duration-300 transform hover:scale-110">
+            <i className="fab fa-github text-xl md:text-2xl"></i>
+          </a>
+        </div>
       </footer>
     </div>
   );
