@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Tense, TenseData, Verb } from './types';
 import { SPANISH_VERB_DATA } from './constants';
@@ -265,23 +266,38 @@ const App: React.FC = () => {
 
     if (stopRequested.current) return null;
 
-    const speedInstruction = "Speak clearly at a natural, standard, and consistent native speed. Maintain the same pace for all phrases, avoiding any sudden changes in speed: ";
+    // TTS Instructions: Native male voice, standard speed
+    const speedInstruction = "You are a native Spanish male speaker. Speak clearly at a natural, standard, and consistent native speed. Maintain the same steady pace for all phrases: ";
     let script = speedInstruction + (prefixWithTense ? `${tense.id}. ` : "");
     script += `${verb.name}. `;
+    
     verb.conjugations.forEach(c => {
-      if (c.form !== '-') script += `${c.pronoun.split('/')[0]} ${c.form}. `;
+      if (c.form !== '-') {
+        let pronounToRead = c.pronoun.split('/')[0];
+        
+        // Handle imperative pronoun replacements: Ud. -> Usted, Uds. -> Ustedes
+        if (tense.id === Tense.AFFIRMATIVE_IMPERATIVE || tense.id === Tense.NEGATIVE_IMPERATIVE) {
+          if (c.pronoun.includes('Ud.')) pronounToRead = "Usted";
+          else if (c.pronoun.includes('Uds.')) pronounToRead = "Ustedes";
+        }
+        
+        script += `${pronounToRead} ${c.form}. `;
+      }
     });
 
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     
-    // No retry loop - Execute once
     try {
       const response = await ai.models.generateContent({
         model: "gemini-2.5-flash-preview-tts",
         contents: [{ parts: [{ text: script.trim() }] }],
         config: {
           responseModalities: [Modality.AUDIO],
-          speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Charon' } } },
+          speechConfig: { 
+            voiceConfig: { 
+              prebuiltVoiceConfig: { voiceName: 'Charon' } // Native male sounding voice
+            } 
+          },
         },
       });
       const audioData = response.candidates?.[0]?.content?.parts?.find((p: any) => p.inlineData?.data);
@@ -292,28 +308,23 @@ const App: React.FC = () => {
         return rawBytes;
       }
     } catch (err: any) {
+      // Error handling logic (Quota etc.)
       const isRateLimit = err.status === 429 || err.code === 429 || 
                           (err.message && (err.message.includes('429') || err.message.includes('quota') || err.message.includes('RESOURCE_EXHAUSTED')));
       
       if (isRateLimit) {
-        let waitSeconds = 60; // 기본 대기 시간 (60초)
-        
-        // Retry-After 헤더 파싱 시도
-        // Gemini API나 SDK 버전에 따라 에러 객체 구조가 다를 수 있어 방어적 코딩 적용
+        let waitSeconds = 60;
         if (err.response?.headers) {
           try {
             const headers = err.response.headers;
-            // Headers 객체 또는 일반 객체 처리
             const retryAfter = typeof headers.get === 'function' 
               ? headers.get('Retry-After') || headers.get('retry-after')
               : headers['Retry-After'] || headers['retry-after'];
             
             if (retryAfter) {
               if (/^\d+$/.test(retryAfter)) {
-                // 초 단위로 주어지는 경우
                 waitSeconds = parseInt(retryAfter, 10);
               } else {
-                // HTTP 날짜 포맷 (예: Wed, 21 Oct 2015 07:28:00 GMT)으로 주어지는 경우
                 const date = new Date(retryAfter);
                 if (!isNaN(date.getTime())) {
                     const diff = Math.ceil((date.getTime() - Date.now()) / 1000);
@@ -325,13 +336,11 @@ const App: React.FC = () => {
             console.warn("Failed to parse Retry-After header", e);
           }
         }
-
         const now = new Date();
         const retryTime = new Date(now.getTime() + waitSeconds * 1000); 
         const timeString = retryTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-
-        setErrorMessage(`API 할당량(Quota)이 소진되었습니다.\n즉시 실행을 중단합니다.\n다음 시간 이후에 다시 시도해주세요:\n\n[ ${timeString} ]\n\n(약 ${waitSeconds}초 대기 필요)`);
-        stopRequested.current = true; // 중요: 전역 중단 플래그 설정
+        setErrorMessage(`API 할당량(Quota)이 소진되었습니다.\n다음 시간 이후에 다시 시도해주세요:\n\n[ ${timeString} ]\n\n(약 ${waitSeconds}초 대기 필요)`);
+        stopRequested.current = true;
         return null;
       } else {
         console.error("API Error:", err);
@@ -382,7 +391,7 @@ const App: React.FC = () => {
         setIsTTSLoading(false);
         await playBuffer(buffer);
       } else {
-        break; // Error or Stop requested
+        break;
       }
     } while (isRepeatEnabledRef.current && !stopRequested.current);
     setIsAudioPlaying(false); setCurrentlyPlayingVerb(null);
@@ -392,49 +401,36 @@ const App: React.FC = () => {
   const downloadTensePacks = async () => {
     if (isDownloading) return;
     const favoriteTenses = SPANISH_VERB_DATA.filter(t => isTenseFav(t.id));
-
     if (favoriteTenses.length === 0) {
       alert("다운로드할 즐겨찾기 시제가 없습니다. 시제 카드 아래의 하트(♥)를 눌러주세요!");
       return;
     }
-
     setIsDownloading(true);
     stopRequested.current = false;
-    
     try {
       for (const tense of favoriteTenses) {
         if (stopRequested.current) break;
         setCurrentDownloadingTense(tense.id);
         setDownloadProgress(0);
         const audioChunks: Uint8Array[] = [];
-
         for (let i = 0; i < tense.verbs.length; i++) {
           if (stopRequested.current) break;
           const verb = tense.verbs[i];
           const raw = await getVerbAudioBuffer(tense, verb, i === 0);
-          
-          if (!raw) {
-             // getVerbAudioBuffer returns null on error/stop.
-             // stopRequested.current is already true if it was an error.
-             break;
-          }
+          if (!raw) break;
           audioChunks.push(raw);
           setDownloadProgress(Math.round(((i + 1) / tense.verbs.length) * 100));
         }
-
         if (stopRequested.current) break;
-
         const totalLength = audioChunks.reduce((acc, chunk) => acc + chunk.length, 0);
         const finalAudio = new Uint8Array(totalLength + 44);
         const header = createWavHeader(totalLength);
         finalAudio.set(header, 0);
-        
         let offset = 44;
         audioChunks.forEach(chunk => {
           finalAudio.set(chunk, offset);
           offset += chunk.length;
         });
-
         const blob = new Blob([finalAudio], { type: 'audio/wav' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -442,7 +438,6 @@ const App: React.FC = () => {
         a.download = `${tense.id}.wav`;
         a.click();
         URL.revokeObjectURL(url);
-        
         await new Promise(r => setTimeout(r, 1000));
       }
     } catch (err) {
